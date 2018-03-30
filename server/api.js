@@ -36,7 +36,7 @@ module.exports = function(app, config) {
 
   // GET API root
   app.get('/api/', (req, res) => {
-    res.send('API works');
+    res.send('API works. Enjoy rest');
 });
 
 };
