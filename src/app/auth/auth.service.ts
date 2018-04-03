@@ -20,6 +20,7 @@ export class AuthService {
   // Create a stream of logged in status to communicate throughout app
   loggedIn: boolean;
   loggedIn$ = new BehaviorSubject<boolean>(this.loggedIn);
+  isAdmin: boolean;
 
   constructor(private router: Router) {
     // If authenticated, set local profile property
@@ -29,7 +30,8 @@ export class AuthService {
     const lsProfile = localStorage.getItem('profile');
 
     if (this.tokenValid) {
-      this.userProfile = JSON.parse(lsProfile);
+      this.userProfile = JSON.parse(localStorage.getItem('profile'));
+      this.isAdmin = localStorage.getItem('isAdmin') === 'true';
       this.setLoggedIn(true);
     } else if (!this.tokenValid && lsProfile) {
       this.logout();
@@ -79,8 +81,17 @@ export class AuthService {
     localStorage.setItem('expires_at', expiresAt);
     localStorage.setItem('profile', JSON.stringify(profile));
     this.userProfile = profile;
+    this.isAdmin = this._checkAdmin(profile);
+    localStorage.setItem('isAdmin', this.isAdmin.toString());
+    this.setLoggedIn(true);
     // Update login status in loggedIn$ stream
     this.setLoggedIn(true);
+  }
+
+  private _checkAdmin(profile) {
+    // Check if the user has admin role
+    const roles = profile[AUTH_CONFIG.NAMESPACE] || [];
+    return roles.indexOf('admin') > -1;
   }
 
   logout() {
