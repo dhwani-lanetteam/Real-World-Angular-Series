@@ -44,7 +44,10 @@ export class AuthService {
     this.loggedIn = value;
   }
 
-  login() {
+  login(redirect?: string) {
+    // Set redirect after login
+    const _redirect = redirect ? redirect : this.router.url;
+    localStorage.setItem('authRedirect', _redirect);
     // Auth0 authorize request
     this._auth0.authorize();
   }
@@ -56,6 +59,8 @@ export class AuthService {
         window.location.hash = '';
         this._getProfile(authResult);
       } else if (err) {
+        this._clearRedirect();
+        this.router.navigate(['/']);
         console.error(`Error authenticating: ${err.error}`);
       }
       this.router.navigate(['/']);
@@ -67,11 +72,36 @@ export class AuthService {
     this._auth0.client.userInfo(authResult.accessToken, (err, profile) => {
       if (profile) {
         this._setSession(authResult, profile);
+        this.router.navigate([localStorage.getItem('authRedirect') || '/']);
+        this._clearRedirect();
       } else if (err) {
         console.error(`Error authenticating: ${err.error}`);
       }
+      this._redirect();
+      this._clearRedirect();
     });
   }
+
+  private _clearRedirect() {
+    // Remove redirect from localStorage
+    localStorage.removeItem('authRedirect');
+  }
+
+  private _redirect() {
+    // Redirect with or without 'tab' query parameter
+    // Note: does not support additional params besides 'tab'
+    const fullRedirect = decodeURI(localStorage.getItem('authRedirect'));
+    const redirectArr = fullRedirect.split('?tab=');
+    const navArr = [redirectArr[0] || '/'];
+    const tabObj = redirectArr[1] ? { queryParams: { tab: redirectArr[1] }} : null;
+
+    if (!tabObj) {
+      this.router.navigate(navArr);
+    } else {
+      this.router.navigate(navArr, tabObj);
+    }
+  }
+
 
   private _setSession(authResult, profile) {
     // Save session data and update login status subject
@@ -100,6 +130,7 @@ export class AuthService {
     localStorage.removeItem('profile');
     localStorage.removeItem('expires_at');
     localStorage.removeItem('authRedirect');
+    this._clearRedirect();
     // Reset local properties, update loggedIn$ stream
     this.userProfile = undefined;
     this.setLoggedIn(false);
@@ -108,7 +139,7 @@ export class AuthService {
   }
 
   get tokenValid(): boolean {
-    // Check if current time is past access token's expiration
+    // Check if current time is past access token's expirationn
     const expiresAt = JSON.parse(localStorage.getItem('expires_at'));
     return Date.now() < expiresAt;
   }
