@@ -23,6 +23,7 @@ import { AdminComponent } from './pages/admin/admin.component';
 import { EventComponent } from './pages/event/event.component';
 import { EventDetailComponent } from './pages/event/event-detail/event-detail.component';
 import { RsvpComponent } from './pages/event/rsvp/rsvp.component';
+import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 
 
 @NgModule({
@@ -43,7 +44,8 @@ import { RsvpComponent } from './pages/event/rsvp/rsvp.component';
     AppRoutingModule,
     FormsModule,
     HttpModule,
-    HttpClientModule
+    HttpClientModule,
+    BrowserAnimationsModule
   ],
   providers: [
     Title,
